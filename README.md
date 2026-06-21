@@ -1,4 +1,5 @@
 # attendance-management-system
+This is my group project of 5 in 2024 for the subject Database Systems.
 Web-Based Attendance Management System
 This system is designed to simplify attendance collection and record-keeping in academic environments. Built with a PHP backend and MySQL relational database, it provides dedicated workflows for both students (self-check-in) and faculty (records management, analytics, and CSV exporting).
 # Access the interface here
