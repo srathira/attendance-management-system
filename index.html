@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Attendance System — UTP</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#003366;
+  --primary-mid:#004E99;
+  --accent:#E31837;
+  --gold:#F5A623;
+  --green:#1A8C4E;
+  --green-bg:#EAF7F0;
+  --red-bg:#FDECEA;
+  --yellow-bg:#FEF9E7;
+  --ink:#12233A;
+  --mist:#5C6F84;
+  --border:#D8E2EE;
+  --surface:#F0F4FA;
+  --white:#FFFFFF;
+  --sidebar-w:240px;
+  --radius:10px;
+  --shadow:0 2px 10px rgba(0,30,70,.08);
+  --shadow-lg:0 6px 28px rgba(0,30,70,.13);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.topbar-brand{display:flex;align-items:center;gap:10px;}
+.topbar-logo{width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;letter-spacing:-0.5px;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:.2px;}
+.topbar-sub{font-size:11px;opacity:.6;font-weight:400;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.role-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;}
+.role-badge:hover{background:rgba(255,255,255,.22);}
+.role-badge.active{background:var(--accent);border-color:var(--accent);}
+.topbar-date{font-size:12px;opacity:.55;}
+
+/* ── LAYOUT ── */
+.shell{display:flex;flex:1;}
+.sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;display:flex;flex-direction:column;}
+.nav-section{padding:0 12px;margin-bottom:8px;}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);padding:8px 8px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--mist);transition:all .15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--surface);color:var(--ink);}
+.nav-item.active{background:#EBF2FF;color:var(--primary-mid);font-weight:600;}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.nav-footer{margin-top:auto;padding:16px 12px;border-top:1px solid var(--border);}
+.nav-user{display:flex;align-items:center;gap:10px;}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.avatar.faculty{background:var(--accent);}
+.nav-user-info{font-size:12px;line-height:1.4;}
+.nav-user-name{font-weight:600;color:var(--ink);}
+.nav-user-role{color:var(--mist);}
+
+/* ── CONTENT ── */
+.content{flex:1;min-width:0;padding:28px 32px;overflow-y:auto;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:24px;}
+.page-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--mist);margin-bottom:6px;}
+.page-title{font-size:24px;font-weight:800;color:var(--ink);}
+.page-desc{font-size:14px;color:var(--mist);margin-top:4px;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border-top:3px solid transparent;}
+.stat-card.blue{border-color:var(--primary-mid);}
+.stat-card.green{border-color:var(--green);}
+.stat-card.red{border-color:var(--accent);}
+.stat-card.gold{border-color:var(--gold);}
+.stat-num{font-size:30px;font-weight:800;line-height:1;margin-bottom:4px;}
+.stat-num.blue{color:var(--primary-mid);}
+.stat-num.green{color:var(--green);}
+.stat-num.red{color:var(--accent);}
+.stat-num.gold{color:var(--gold);}
+.stat-label{font-size:12px;color:var(--mist);font-weight:500;}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:15px;font-weight:700;color:var(--ink);}
+.card-body{padding:20px;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{background:var(--surface);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mist);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border:none;}
+tbody tr:hover{background:#FAFCFF;}
+tbody td{padding:11px 14px;vertical-align:middle;}
+.td-name{font-weight:600;color:var(--ink);}
+.td-id{font-size:12px;color:var(--mist);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;gap:4px;}
+.badge-present{background:var(--green-bg);color:var(--green);}
+.badge-absent{background:var(--red-bg);color:var(--accent);}
+.badge-late{background:var(--yellow-bg);color:#B07D00;}
+.badge-warning{background:var(--yellow-bg);color:#B07D00;}
+.badge-ok{background:var(--green-bg);color:var(--green);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-mid);}
+.btn-danger{background:var(--accent);color:#fff;}
+.btn-danger:hover{background:#C0102A;}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--border);}
+.btn-outline:hover{border-color:var(--primary);background:var(--surface);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#157040;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* ── FORMS ── */
+.form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.grow{flex:1;min-width:140px;}
+.form-group label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mist);}
+.form-group input,.form-group select{border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13.5px;font-family:inherit;color:var(--ink);background:var(--surface);outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary-mid);background:#fff;}
+
+/* ── PROGRESS BAR ── */
+.progress-bar-wrap{background:#E8EEF8;border-radius:100px;height:8px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:100px;transition:width .4s ease;}
+.fill-green{background:var(--green);}
+.fill-gold{background:var(--gold);}
+.fill-red{background:var(--accent);}
+
+/* ── CHECK-IN ── */
+.checkin-box{background:linear-gradient(135deg,var(--primary) 0%,#00264D 100%);border-radius:14px;padding:32px;color:#fff;text-align:center;margin-bottom:24px;}
+.checkin-time{font-size:44px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.checkin-date{font-size:14px;opacity:.65;margin-top:6px;margin-bottom:28px;}
+.checkin-status{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:6px 20px;font-size:13px;margin-bottom:24px;}
+.checkin-status.done{background:rgba(26,140,78,.3);border-color:rgba(26,140,78,.6);}
+.session-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.session-card-select{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;text-align:left;}
+.session-card-select:hover,.session-card-select.sel{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.5);}
+.session-card-select .sc-code{font-size:13px;font-weight:700;opacity:.9;}
+.session-card-select .sc-name{font-size:11px;opacity:.6;margin-top:2px;}
+.session-card-select .sc-time{font-size:11px;opacity:.5;margin-top:4px;}
+
+/* ── ALERT ── */
+.alert{border-radius:8px;padding:12px 16px;font-size:13.5px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;}
+.alert-warning{background:var(--yellow-bg);color:#7A5300;border:1px solid #F5DDA1;}
+.alert-success{background:var(--green-bg);color:#145F33;border:1px solid #A8DFC0;}
+.alert-info{background:#EBF2FF;color:#00337A;border:1px solid #BAD2F5;}
+
+/* ── DONUT CHART ── */
+.donut-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.donut{position:relative;width:110px;height:110px;flex-shrink:0;}
+.donut svg{transform:rotate(-90deg);}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.donut-pct{font-size:20px;font-weight:800;color:var(--ink);}
+.donut-sub{font-size:10px;color:var(--mist);}
+.legend-list{display:flex;flex-direction:column;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .3s;z-index:999;max-width:280px;}
+#toast.show{opacity:1;}
+#toast.toast-success{background:var(--green);}
+#toast.toast-warn{background:#B07D00;}
+
+/* ── TABS ── */
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;background:var(--surface);padding:4px;border-radius:10px;width:fit-content;}
+.tab-btn{padding:7px 18px;border-radius:8px;border:none;background:none;font-size:13px;font-weight:600;color:var(--mist);cursor:pointer;font-family:inherit;transition:all .15s;}
+.tab-btn.active{background:#fff;color:var(--primary);box-shadow:var(--shadow);}
+
+/* ── WARNING PANEL ── */
+.warning-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.warning-row:last-child{border:none;}
+.warning-student{font-size:13.5px;font-weight:600;}
+.warning-detail{font-size:12px;color:var(--mist);}
+.warning-pct{font-size:13px;font-weight:700;color:var(--accent);}
+
+/* ── EXPORT ── */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.export-option{border:1.5px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;}
+.export-icon{font-size:28px;}
+.export-title{font-size:14px;font-weight:700;}
+.export-desc{font-size:12px;color:var(--mist);line-height:1.5;}
+
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .content{padding:16px;}
+  .session-grid{grid-template-columns:1fr;}
+  .export-grid{grid-template-columns:1fr;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .dash-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">UTP</div>
+    <div>
+      <div class="topbar-title">UTP Attendance System</div>
+      <div class="topbar-sub">Universiti Teknologi PETRONAS</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-date" id="topDate"></span>
+    <button class="role-badge active" id="btnStudent" onclick="switchRole('student')">Student</button>
+    <button class="role-badge" id="btnFaculty" onclick="switchRole('faculty')">Lecturer</button>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div id="nav-student">
+    <div class="nav-section">
+      <div class="nav-label">Student</div>
+      <div class="nav-item active" onclick="showPage('checkin')"><span class="icon">✅</span>Check In</div>
+      <div class="nav-item" onclick="showPage('myrecord')"><span class="icon">📋</span>My Records</div>
+      <div class="nav-item" onclick="showPage('schedule')"><span class="icon">🗓</span>Class Schedule</div>
+    </div>
+  </div>
+  <div id="nav-faculty" style="display:none">
+    <div class="nav-section">
+      <div class="nav-label">Lecturer</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('records')"><span class="icon">📋</span>Attendance Records</div>
+      <div class="nav-item" onclick="showPage('warnings')"><span class="icon">⚠️</span>Attendance Warnings</div>
+      <div class="nav-item" onclick="showPage('export')"><span class="icon">📤</span>Export Data</div>
+    </div>
+  </div>
+  <div class="nav-footer">
+    <div class="nav-user" id="navUser">
+      <div class="avatar" id="navAvatar">AH</div>
+      <div class="nav-user-info">
+        <div class="nav-user-name" id="navName">Ahmad Haziq Rosli</div>
+        <div class="nav-user-role" id="navRole">20005231 — Computer Science</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- CONTENT -->
+<main class="content">
+
+<!-- ═══ STUDENT: CHECK-IN ═══ -->
+<div class="page active" id="page-checkin">
+  <div class="page-header">
+    <div class="page-eyebrow">Student Portal</div>
+    <div class="page-title">Attendance Check-In</div>
+    <div class="page-desc">Select your session and confirm your attendance for today.</div>
+  </div>
+  <div class="checkin-box">
+    <div class="checkin-time" id="clockDisplay">08:00</div>
+    <div class="checkin-date" id="clockDate">Monday, 21 June 2026</div>
+    <div class="checkin-status" id="checkinStatus">No session selected</div>
+    <div style="font-size:13px;opacity:.6;margin-bottom:16px;">Select a class below, then press Check In</div>
+    <div class="session-grid" id="sessionGrid"></div>
+    <button class="btn btn-green" style="font-size:15px;padding:12px 40px;" onclick="doCheckin()">✔ Check In Now</button>
+  </div>
+  <div id="checkinFeedback"></div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Today's Check-Ins</span></div>
+    <div class="card-body" id="todayCheckins">
+      <div style="color:var(--mist);font-size:13px;">No attendance recorded today yet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STUDENT: MY RECORD ═══ -->
+<div class="page" id="page-myrecord">
+  <div class="page-header">
+    <div class="page-eyebrow">Student Portal</div>
+    <div class="page-title">My Attendance Record</div>
+  </div>
+  <div class="stat-row" id="myStatRow"></div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Attendance Rate by Subject</span></div>
+    <div class="card-body" id="mySubjectBars"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Detailed Attendance Log</span>
+      <div class="form-row" style="gap:8px;">
+        <div class="form-group"><select onchange="filterMyLog(this.value)" style="padding:6px 10px;font-size:12px;">
+          <option value="all">All Subjects</option>
+          <option value="ICT2233">ICT2233</option>
+          <option value="ICT2244">ICT2244</option>
+          <option value="ICT2255">ICT2255</option>
+          <option value="MPU3113">MPU3113</option>
+        </select></div>
+      </div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Subject</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody id="myLogTable"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ STUDENT: SCHEDULE ═══ -->
+<div class="page" id="page-schedule">
+  <div class="page-header">
+    <div class="page-eyebrow">Student Portal</div>
+    <div class="page-title">Class Schedule</div>
+    <div class="page-desc">Semester June – October 2026</div>
+  </div>
+  <div class="card">
+    <div class="card-body" id="scheduleGrid"></div>
+  </div>
+</div>
+
+<!-- ═══ FACULTY: DASHBOARD ═══ -->
+<div class="page" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-eyebrow">Lecturer Portal</div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-desc">Attendance overview — June 2026 Semester</div>
+  </div>
+  <div class="stat-row" id="dashStatRow"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="dash-grid">
+    <div class="card" style="margin:0">
+      <div class="card-header"><span class="card-title">Overall Attendance Rate</span></div>
+      <div class="card-body">
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="44" fill="none" stroke="#E8EEF8" stroke-width="12"/>
+              <circle cx="55" cy="55" r="44" fill="none" stroke="var(--green)" stroke-width="12"
+                stroke-dasharray="207 276.46" id="donutPresent"/>
+              <circle cx="55" cy="55" r="44" fill="none" stroke="var(--gold)" stroke-width="12"
+                stroke-dasharray="0 276.46" stroke-dashoffset="-207" id="donutLate"/>
+              <circle cx="55" cy="55" r="44" fill="none" stroke="var(--accent)" stroke-width="12"
+                stroke-dasharray="0 276.46" stroke-dashoffset="-207" id="donutAbsent"/>
+            </svg>
+            <div class="donut-center"><div class="donut-pct" id="donutPct">75%</div><div class="donut-sub">present</div></div>
+          </div>
+          <div class="legend-list">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span id="lgPresent">Present: 75%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><span id="lgLate">Late: 10%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><span id="lgAbsent">Absent: 15%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="card-header"><span class="card-title">Attendance by Subject</span></div>
+      <div class="card-body" id="subjectBars"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Recently Checked In Today</span>
+      <span style="font-size:12px;color:var(--mist)" id="todayCount">0 check-ins</span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Student Name</th><th>Student ID</th><th>Subject</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody id="recentTable"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ FACULTY: RECORDS ═══ -->
+<div class="page" id="page-records">
+  <div class="page-header">
+    <div class="page-eyebrow">Lecturer Portal</div>
+    <div class="page-title">Attendance Records</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Filter Records</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group grow"><label>Subject</label>
+          <select id="filterSubject" onchange="renderRecords()">
+            <option value="all">All Subjects</option>
+            <option value="ICT2233">ICT2233 — Web Programming</option>
+            <option value="ICT2244">ICT2244 — Data Structures</option>
+            <option value="ICT2255">ICT2255 — Computer Networks</option>
+            <option value="MPU3113">MPU3113 — Integrity & Ethics</option>
+          </select>
+        </div>
+        <div class="form-group grow"><label>Status</label>
+          <select id="filterStatus" onchange="renderRecords()">
+            <option value="all">All Statuses</option>
+            <option value="Present">Present</option>
+            <option value="Late">Late</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </div>
+        <div class="form-group grow"><label>Search Student</label>
+          <input type="text" id="filterSearch" placeholder="Name or Student ID…" oninput="renderRecords()"/>
+        </div>
+        <div class="form-group"><label>&nbsp;</label>
+          <button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Attendance Records</span>
+      <span style="font-size:12px;color:var(--mist)" id="recordCount"></span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Student Name</th><th>Student ID</th><th>Subject</th><th>Date</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="recordsTable"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ FACULTY: WARNINGS ═══ -->
+<div class="page" id="page-warnings">
+  <div class="page-header">
+    <div class="page-eyebrow">Lecturer Portal</div>
+    <div class="page-title">Attendance Warnings</div>
+    <div class="page-desc">Students with attendance rate below 80% — at risk of course failure.</div>
+  </div>
+  <div class="alert alert-warning">⚠️ &nbsp;Students who attend fewer than 80% of classes may be barred from sitting the final examination under UTP Academic Regulations.</div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Warning List</span>
+      <span id="warnCount" style="font-size:12px;color:var(--accent);font-weight:700;"></span>
+    </div>
+    <div class="card-body" id="warningsList"></div>
+  </div>
+</div>
+
+<!-- ═══ FACULTY: EXPORT ═══ -->
+<div class="page" id="page-export">
+  <div class="page-header">
+    <div class="page-eyebrow">Lecturer Portal</div>
+    <div class="page-title">Export Data</div>
+    <div class="page-desc">Download attendance records in spreadsheet-compatible formats.</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Export Settings</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group grow"><label>Subject</label>
+          <select id="expSubject">
+            <option value="all">All Subjects</option>
+            <option value="ICT2233">ICT2233 — Web Programming</option>
+            <option value="ICT2244">ICT2244 — Data Structures</option>
+            <option value="ICT2255">ICT2255 — Computer Networks</option>
+            <option value="MPU3113">MPU3113 — Integrity & Ethics</option>
+          </select>
+        </div>
+        <div class="form-group grow"><label>Date Range</label>
+          <select id="expRange">
+            <option value="all">Full Semester</option>
+            <option value="month">This Month</option>
+            <option value="week">This Week</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="export-grid">
+    <div class="export-option">
+      <div class="export-icon">📊</div>
+      <div class="export-title">CSV (Excel / Google Sheets)</div>
+      <div class="export-desc">Standard format for Microsoft Excel, Google Sheets, or LibreOffice Calc.</div>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇ Download CSV</button>
+    </div>
+    <div class="export-option">
+      <div class="export-icon">📄</div>
+      <div class="export-title">Summary Report (CSV)</div>
+      <div class="export-desc">Export each student's attendance percentage per subject in a compact summary.</div>
+      <button class="btn btn-outline btn-sm" onclick="exportSummary()">⬇ Export Summary</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="card-header"><span class="card-title">Export Data Preview</span></div>
+    <div class="table-wrap" id="exportPreview"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════
+//  DATA
+// ═══════════════════════════
+const SUBJECTS = [
+  {code:'ICT2233',name:'Web Programming',time:'Monday 08:00–10:00',room:'B5-L2-01',credit:3},
+  {code:'ICT2244',name:'Data Structures',time:'Tuesday 10:00–12:00',room:'B5-L2-02',credit:3},
+  {code:'ICT2255',name:'Computer Networks',time:'Wednesday 14:00–16:00',room:'B5-L2-03',credit:3},
+  {code:'MPU3113',name:'Integrity & Anti-Corruption',time:'Thursday 08:00–10:00',room:'B5-L1-01',credit:2},
+];
+
+const STUDENTS = [
+  {matric:'20005231',name:'Ahmad Haziq Rosli',program:'Computer Science'},
+  {matric:'20005232',name:'Nurul Ain Azman',program:'Computer Science'},
+  {matric:'20005233',name:'Muhammad Izzat Yusoff',program:'Computer Science'},
+  {matric:'20005234',name:'Siti Nabilah Hassan',program:'Computer Science'},
+  {matric:'20005235',name:'Wan Hafiz Wan Ahmad',program:'Computer Science'},
+  {matric:'20005236',name:'Farah Irdina Mohd Zain',program:'Computer Science'},
+  {matric:'20005237',name:'Khairul Anuar Ismail',program:'Computer Science'},
+  {matric:'20005238',name:'Amirah Sufian',program:'Computer Science'},
+  {matric:'20005239',name:'Zulaikha Omar',program:'Computer Science'},
+  {matric:'20005240',name:'Hafizuddin Malik',program:'Computer Science'},
+];
+
+const DATES = ['2026-06-01','2026-06-03','2026-06-08','2026-06-10','2026-06-15','2026-06-17','2026-06-21'];
+const TIMES = ['08:05','08:12','08:03','08:22','08:09','08:45','10:03'];
+
+let records = [];
+let rid = 1;
+STUDENTS.forEach(s=>{
+  SUBJECTS.forEach(sub=>{
+    DATES.forEach((date,di)=>{
+      const r = Math.random();
+      const st = r<0.72?'Present':r<0.85?'Late':'Absent';
+      records.push({
+        id:rid++,matric:s.matric,name:s.name,
+        subject:sub.code,subjectName:sub.name,
+        date,time:TIMES[di],status:st
+      });
+    });
+  });
+});
+
+let todayCheckins = [];
+let selectedSession = null;
+
+// ═══════════════════════════
+//  CLOCK
+// ═══════════════════════════
+function updateClock(){
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clockDisplay').textContent = h+':'+m;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clockDate').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('topDate').textContent =
+    `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══════════════════════════
+//  ROLE SWITCH
+// ═══════════════════════════
+let currentRole = 'student';
+function switchRole(role){
+  currentRole = role;
+  document.getElementById('btnStudent').classList.toggle('active', role==='student');
+  document.getElementById('btnFaculty').classList.toggle('active', role==='faculty');
+  document.getElementById('nav-student').style.display = role==='student'?'':'none';
+  document.getElementById('nav-faculty').style.display = role==='faculty'?'':'none';
+  const av = document.getElementById('navAvatar');
+  if(role==='student'){
+    av.className='avatar'; av.textContent='AH';
+    document.getElementById('navName').textContent='Ahmad Haziq Rosli';
+    document.getElementById('navRole').textContent='20005231 — Computer Science';
+    showPage('checkin');
+  } else {
+    av.className='avatar faculty'; av.textContent='DR';
+    document.getElementById('navName').textContent='Dr. Rashidah Ismail';
+    document.getElementById('navRole').textContent='Dept. of Computer & Information Sciences';
+    showPage('dashboard');
+  }
+}
+
+// ═══════════════════════════
+//  NAVIGATION
+// ═══════════════════════════
+let currentPage = 'checkin';
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  currentPage = id;
+  if(id==='dashboard') renderDashboard();
+  if(id==='records') renderRecords();
+  if(id==='warnings') renderWarnings();
+  if(id==='myrecord') renderMyRecord();
+  if(id==='schedule') renderSchedule();
+  if(id==='checkin') renderCheckin();
+  if(id==='export') renderExportPreview();
+}
+
+// ═══════════════════════════
+//  STUDENT: CHECK-IN
+// ═══════════════════════════
+function renderCheckin(){
+  const grid = document.getElementById('sessionGrid');
+  grid.innerHTML = SUBJECTS.map((s,i)=>`
+    <div class="session-card-select ${selectedSession===i?'sel':''}" onclick="selectSession(${i})">
+      <div class="sc-code">${s.code}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-time">${s.time} · ${s.room}</div>
+    </div>`).join('');
+  renderTodayCheckins();
+}
+function selectSession(i){
+  selectedSession = i;
+  const s = SUBJECTS[i];
+  document.getElementById('checkinStatus').textContent = `Selected: ${s.code} — ${s.name}`;
+  document.getElementById('checkinStatus').className = 'checkin-status';
+  renderCheckin();
+}
+function doCheckin(){
+  if(selectedSession===null){showToast('Please select a session first','warn');return;}
+  const s = SUBJECTS[selectedSession];
+  const already = todayCheckins.find(c=>c.subject===s.code);
+  if(already){showToast('Already checked in for '+s.code,'warn');return;}
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const status = now.getMinutes()>15?'Late':'Present';
+  todayCheckins.push({subject:s.code,name:s.name,time,status});
+  records.push({id:rid++,matric:'20005231',name:'Ahmad Haziq Rosli',
+    subject:s.code,subjectName:s.name,date:'2026-06-21',time,status});
+  document.getElementById('checkinStatus').textContent = `✓ Successfully checked in — ${s.code}`;
+  document.getElementById('checkinStatus').className = 'checkin-status done';
+  showToast('Attendance recorded successfully!','success');
+  renderCheckin();
+}
+function renderTodayCheckins(){
+  const el = document.getElementById('todayCheckins');
+  if(!todayCheckins.length){el.innerHTML='<div style="color:var(--mist);font-size:13px;">No attendance recorded today yet.</div>';return;}
+  el.innerHTML=todayCheckins.map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:12px;">
+      <div>
+        <div style="font-weight:600;font-size:14px;">${c.subject}</div>
+        <div style="font-size:12px;color:var(--mist)">${c.name} · ${c.time}</div>
+      </div>
+      ${badgeHtml(c.status)}
+    </div>`).join('');
+}
+
+// ═══════════════════════════
+//  STUDENT: MY RECORD
+// ═══════════════════════════
+function renderMyRecord(){
+  const myRec = records.filter(r=>r.matric==='20005231');
+  const total = myRec.length;
+  const present = myRec.filter(r=>r.status==='Present').length;
+  const late = myRec.filter(r=>r.status==='Late').length;
+  const absent = myRec.filter(r=>r.status==='Absent').length;
+  document.getElementById('myStatRow').innerHTML = `
+    <div class="stat-card blue"><div class="stat-num blue">${total}</div><div class="stat-label">Total Sessions</div></div>
+    <div class="stat-card green"><div class="stat-num green">${present}</div><div class="stat-label">Present</div></div>
+    <div class="stat-card gold"><div class="stat-num gold">${late}</div><div class="stat-label">Late</div></div>
+    <div class="stat-card red"><div class="stat-num red">${absent}</div><div class="stat-label">Absent</div></div>`;
+  document.getElementById('mySubjectBars').innerHTML = SUBJECTS.map(s=>{
+    const sr = myRec.filter(r=>r.subject===s.code);
+    const p = sr.length?Math.round(sr.filter(r=>r.status!=='Absent').length/sr.length*100):0;
+    const col = p>=80?'fill-green':p>=60?'fill-gold':'fill-red';
+    const warn = p<80?'<span class="badge badge-warning">⚠ Warning</span>':'<span class="badge badge-ok">✓ OK</span>';
+    return `<div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div><span style="font-weight:600;font-size:14px;">${s.code}</span> <span style="font-size:12px;color:var(--mist)">${s.name}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">${warn}<span style="font-weight:700;font-size:14px;">${p}%</span></div>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill ${col}" style="width:${p}%"></div></div>
+    </div>`;
+  }).join('');
+  renderMyLog('all');
+}
+function filterMyLog(sub){ renderMyLog(sub); }
+function renderMyLog(sub){
+  const myRec = records.filter(r=>r.matric==='20005231'&&(sub==='all'||r.subject===sub));
+  document.getElementById('myLogTable').innerHTML = myRec.slice().reverse().map(r=>`
+    <tr><td>${fmtDate(r.date)}</td><td>${r.subject}</td><td>${r.time}</td><td>${badgeHtml(r.status)}</td></tr>`).join('');
+}
+
+// ═══════════════════════════
+//  STUDENT: SCHEDULE
+// ═══════════════════════════
+function renderSchedule(){
+  document.getElementById('scheduleGrid').innerHTML = SUBJECTS.map(s=>`
+    <div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
+      <div style="width:56px;height:56px;border-radius:10px;background:#EBF2FF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--primary);flex-shrink:0;">${s.code.slice(-4)}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;">${s.code} — ${s.name}</div>
+        <div style="font-size:12px;color:var(--mist);margin-top:3px;">${s.time} · Room ${s.room} · ${s.credit} Credit Hours</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════
+//  FACULTY: DASHBOARD
+// ═══════════════════════════
+function renderDashboard(){
+  const total = records.length;
+  const present = records.filter(r=>r.status==='Present').length;
+  const late = records.filter(r=>r.status==='Late').length;
+  const absent = records.filter(r=>r.status==='Absent').length;
+  const rate = Math.round((present+late)/total*100);
+  const todayRecs = records.filter(r=>r.date==='2026-06-21');
+  document.getElementById('dashStatRow').innerHTML=`
+    <div class="stat-card blue"><div class="stat-num blue">${STUDENTS.length}</div><div class="stat-label">Total Students</div></div>
+    <div class="stat-card green"><div class="stat-num green">${rate}%</div><div class="stat-label">Attendance Rate</div></div>
+    <div class="stat-card red"><div class="stat-num red">${STUDENTS.filter(s=>getStudentRate(s.matric)<80).length}</div><div class="stat-label">At-Risk Students</div></div>
+    <div class="stat-card gold"><div class="stat-num gold">${todayRecs.length}</div><div class="stat-label">Check-Ins Today</div></div>`;
+  const pPresent = Math.round(present/total*100);
+  const pLate = Math.round(late/total*100);
+  const pAbsent = 100-pPresent-pLate;
+  const C = 276.46;
+  const d1=C*pPresent/100, d2=C*pLate/100, d3=C*pAbsent/100;
+  document.getElementById('donutPresent').setAttribute('stroke-dasharray',`${d1} ${C}`);
+  document.getElementById('donutLate').setAttribute('stroke-dasharray',`${d2} ${C}`);
+  document.getElementById('donutLate').setAttribute('stroke-dashoffset',`${-d1}`);
+  document.getElementById('donutAbsent').setAttribute('stroke-dasharray',`${d3} ${C}`);
+  document.getElementById('donutAbsent').setAttribute('stroke-dashoffset',`${-(d1+d2)}`);
+  document.getElementById('donutPct').textContent=rate+'%';
+  document.getElementById('lgPresent').textContent=`Present: ${pPresent}%`;
+  document.getElementById('lgLate').textContent=`Late: ${pLate}%`;
+  document.getElementById('lgAbsent').textContent=`Absent: ${pAbsent}%`;
+  document.getElementById('subjectBars').innerHTML = SUBJECTS.map(s=>{
+    const sr = records.filter(r=>r.subject===s.code);
+    const p = sr.length?Math.round(sr.filter(r=>r.status!=='Absent').length/sr.length*100):0;
+    const col=p>=80?'fill-green':p>=60?'fill-gold':'fill-red';
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">
+        <span style="font-weight:600;">${s.code}</span><span style="font-weight:700;">${p}%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill ${col}" style="width:${p}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('todayCount').textContent=todayRecs.length+' check-ins';
+  document.getElementById('recentTable').innerHTML = todayRecs.slice(-8).reverse().map(r=>`
+    <tr>
+      <td class="td-name">${r.name}</td>
+      <td class="td-id">${r.matric}</td>
+      <td><span style="font-weight:600;">${r.subject}</span></td>
+      <td>${r.time}</td>
+      <td>${badgeHtml(r.status)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="color:var(--mist);text-align:center;padding:20px">No records today</td></tr>';
+}
+
+// ═══════════════════════════
+//  FACULTY: RECORDS
+// ═══════════════════════════
+function renderRecords(){
+  const sub = document.getElementById('filterSubject')?.value||'all';
+  const st = document.getElementById('filterStatus')?.value||'all';
+  const q = (document.getElementById('filterSearch')?.value||'').toLowerCase();
+  let filtered = records.filter(r=>
+    (sub==='all'||r.subject===sub)&&
+    (st==='all'||r.status===st)&&
+    (!q||(r.name.toLowerCase().includes(q)||r.matric.toLowerCase().includes(q)))
+  );
+  document.getElementById('recordCount').textContent=filtered.length+' records';
+  document.getElementById('recordsTable').innerHTML = filtered.slice().reverse().slice(0,60).map(r=>`
+    <tr>
+      <td class="td-name">${r.name}</td>
+      <td class="td-id">${r.matric}</td>
+      <td>${r.subject}</td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.time}</td>
+      <td>${badgeHtml(r.status)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="editStatus(${r.id})">Edit</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mist)">No records found</td></tr>';
+}
+function resetFilters(){
+  document.getElementById('filterSubject').value='all';
+  document.getElementById('filterStatus').value='all';
+  document.getElementById('filterSearch').value='';
+  renderRecords();
+}
+function editStatus(id){
+  const rec = records.find(r=>r.id===id);
+  if(!rec) return;
+  const newStatus = prompt(`Update status for ${rec.name}\nCurrent: ${rec.status}\nEnter: Present / Late / Absent`, rec.status);
+  if(newStatus && ['Present','Late','Absent'].includes(newStatus)){
+    rec.status = newStatus;
+    showToast('Status updated — '+rec.status,'success');
+    renderRecords();
+  }
+}
+
+// ═══════════════════════════
+//  FACULTY: WARNINGS
+// ═══════════════════════════
+function getStudentRate(matric){
+  const sr = records.filter(r=>r.matric===matric);
+  if(!sr.length) return 100;
+  return Math.round(sr.filter(r=>r.status!=='Absent').length/sr.length*100);
+}
+function renderWarnings(){
+  const warned = STUDENTS.map(s=>({...s,rate:getStudentRate(s.matric)})).filter(s=>s.rate<80).sort((a,b)=>a.rate-b.rate);
+  document.getElementById('warnCount').textContent = warned.length+' student(s) identified';
+  document.getElementById('warningsList').innerHTML = warned.length
+    ? warned.map(s=>{
+        const col = s.rate<60?'fill-red':'fill-gold';
+        return `<div class="warning-row">
+          <div>
+            <div class="warning-student">${s.name}</div>
+            <div class="warning-detail">${s.matric} — ${s.program}</div>
+            <div style="margin-top:8px;max-width:200px;"><div class="progress-bar-wrap"><div class="progress-bar-fill ${col}" style="width:${s.rate}%"></div></div></div>
+          </div>
+          <div style="text-align:right;">
+            <div class="warning-pct">${s.rate}%</div>
+            <div style="font-size:11px;color:var(--mist);">attendance</div>
+            <span class="badge ${s.rate<60?'badge-absent':'badge-warning'}" style="margin-top:6px;">${s.rate<60?'Critical':'Warning'}</span>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--green);font-weight:600;text-align:center;padding:24px;">✓ All students meet the minimum attendance requirement.</div>';
+}
+
+// ═══════════════════════════
+//  EXPORT
+// ═══════════════════════════
+function getExportData(){
+  const sub = document.getElementById('expSubject')?.value||'all';
+  return records.filter(r=>sub==='all'||r.subject===sub);
+}
+function exportCSV(){
+  const data = getExportData();
+  const header = 'Student Name,Student ID,Subject Code,Subject Name,Date,Time,Status\n';
+  const rows = data.map(r=>`"${r.name}",${r.matric},${r.subject},"${r.subjectName}",${r.date},${r.time},${r.status}`).join('\n');
+  downloadFile('utp_attendance_records.csv', header+rows, 'text/csv');
+  showToast('CSV downloaded successfully!','success');
+}
+function exportSummary(){
+  const sub = document.getElementById('expSubject')?.value||'all';
+  const header = 'Student Name,Student ID,Subject,Total Sessions,Present,Late,Absent,Rate (%)\n';
+  let rows = [];
+  STUDENTS.forEach(s=>{
+    SUBJECTS.filter(sj=>sub==='all'||sj.code===sub).forEach(sj=>{
+      const sr = records.filter(r=>r.matric===s.matric&&r.subject===sj.code);
+      const p=sr.filter(r=>r.status==='Present').length;
+      const l=sr.filter(r=>r.status==='Late').length;
+      const a=sr.filter(r=>r.status==='Absent').length;
+      const rate = sr.length?Math.round((p+l)/sr.length*100):0;
+      rows.push(`"${s.name}",${s.matric},${sj.code},${sr.length},${p},${l},${a},${rate}%`);
+    });
+  });
+  downloadFile('utp_attendance_summary.csv', header+rows.join('\n'), 'text/csv');
+  showToast('Summary exported successfully!','success');
+}
+function downloadFile(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+content],{type}));
+  a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+function renderExportPreview(){
+  const data = getExportData().slice(0,8);
+  document.getElementById('exportPreview').innerHTML = `<table>
+    <thead><tr><th>Student Name</th><th>Student ID</th><th>Subject</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>${data.map(r=>`<tr><td>${r.name}</td><td>${r.matric}</td><td>${r.subject}</td><td>${fmtDate(r.date)}</td><td>${badgeHtml(r.status)}</td></tr>`).join('')}</tbody>
+  </table><div style="padding:12px 14px;font-size:12px;color:var(--mist)">Showing ${data.length} of ${getExportData().length} records</div>`;
+}
+
+// ═══════════════════════════
+//  HELPERS
+// ═══════════════════════════
+function badgeHtml(s){
+  const map={Present:'badge-present',Late:'badge-late',Absent:'badge-absent'};
+  const icon={Present:'✓',Late:'⏱',Absent:'✗'};
+  return `<span class="badge ${map[s]||''}">${icon[s]||''} ${s}</span>`;
+}
+function fmtDate(d){
+  if(!d)return'';
+  const [y,m,dd]=d.split('-');
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${dd} ${months[parseInt(m)-1]} ${y}`;
+}
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+(type==='success'?'toast-success':type==='warn'?'toast-warn':'');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='',2800);
+}
+
+// ── INIT ──
+renderCheckin();
+</script>
+</body>
+</html>
